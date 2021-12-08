@@ -34,6 +34,7 @@ import com.github.benmanes.caffeine.cache.simulator.policy.Policy.PolicySpec;
 import com.github.benmanes.caffeine.cache.simulator.policy.adaptive.ArcPolicy;
 import com.github.benmanes.caffeine.cache.simulator.policy.adaptive.CarPolicy;
 import com.github.benmanes.caffeine.cache.simulator.policy.adaptive.CartPolicy;
+import com.github.benmanes.caffeine.cache.simulator.policy.dashtable.DashtablePolicy;
 import com.github.benmanes.caffeine.cache.simulator.policy.greedy_dual.CampPolicy;
 import com.github.benmanes.caffeine.cache.simulator.policy.greedy_dual.GDWheelPolicy;
 import com.github.benmanes.caffeine.cache.simulator.policy.greedy_dual.GdsfPolicy;
@@ -124,6 +125,7 @@ public final class Registry {
     registerTwoQueue();
     registerAdaptive();
     registerGreedyDual();
+    registerDashtable();
   }
 
   /** Registers the policy based on the annotated name. */
@@ -234,6 +236,10 @@ public final class Registry {
     register(Ehcache3Policy.class, Ehcache3Policy::new);
     register(ExpiringMapPolicy.class, ExpiringMapPolicy::new);
     register(ElasticSearchPolicy.class, ElasticSearchPolicy::new);
+  }
+
+  private void registerDashtable() {
+    register(DashtablePolicy.class, DashtablePolicy::new);
   }
 
   @AutoValue
