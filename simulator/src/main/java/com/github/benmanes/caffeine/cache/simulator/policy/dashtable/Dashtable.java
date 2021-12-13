@@ -7,6 +7,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import com.github.benmanes.caffeine.cache.simulator.policy.AccessEvent;
+import com.github.benmanes.caffeine.cache.simulator.policy.PolicyStats;
+import java.util.List;
+import java.util.ArrayList;
 
 public class Dashtable implements AutoCloseable {
     private final Socket socket;
@@ -18,6 +22,14 @@ public class Dashtable implements AutoCloseable {
         BAD,
         EVICTED
     }
+
+    static class BatchResult {
+       public int evicted = 0;
+       public List<Integer> misses = new ArrayList<Integer>();
+
+       public List<Integer> hits = new ArrayList<Integer>();
+
+    } 
 
     public Dashtable() throws IOException {
         socket = new Socket("localhost", 41998);
@@ -46,6 +58,26 @@ public class Dashtable implements AutoCloseable {
         }
 
         return Long.parseLong(resp);
+    }
+
+    public void insertMany(List<AccessEvent> list, PolicyStats stats) throws IOException {        
+        for (AccessEvent event : list) {
+           writer.write("FINDINSERT " + event.key() + " " + event.weight() + "\n");
+        }
+        writer.flush();        
+        for (AccessEvent event : list) {            
+           String resp = reader.readLine();
+           if (resp.equals("EVICTED")) {
+              stats.recordEviction();
+              stats.recordWeightedMiss(event.weight());
+            } else if (resp.equals("MISS")) {
+              stats.recordWeightedMiss(event.weight());
+            } else if (resp.equals("HIT")) {
+              stats.recordWeightedHit(event.weight());               
+            } else {
+              throw new IllegalStateException();  
+            }            
+        }
     }
 
     @Override

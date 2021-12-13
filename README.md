@@ -144,3 +144,12 @@ Snapshots of the development version are available in
 [dropwizard]: https://www.dropwizard.io
 [grails]: https://grails.org
 [quarkus]: https://quarkus.io
+
+
+## Simulator
+
+run `/gradlew simulator:run` and see here for
+[more options](https://github.com/ben-manes/caffeine/wiki/Simulator)
+
+Change file `simulator/src/main/resources/reference.conf` to put a permanent option easily.
+
