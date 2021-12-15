@@ -67,16 +67,16 @@ public class Dashtable implements AutoCloseable {
         writer.flush();        
         for (AccessEvent event : list) {            
            String resp = reader.readLine();
-           if (resp.equals("EVICTED")) {
-              stats.recordEviction();
-              stats.recordWeightedMiss(event.weight());
-            } else if (resp.equals("MISS")) {
-              stats.recordWeightedMiss(event.weight());
-            } else if (resp.equals("HIT")) {
-              stats.recordWeightedHit(event.weight());               
-            } else {
-              throw new IllegalStateException();  
-            }            
+           recordStats(resp, event.weight(), stats);
+        }
+    }
+
+    public void loadFile(String fileName, long numRecords, PolicyStats stats) throws IOException {
+        writer.write("LOAD " + fileName + "\n");
+        writer.flush();
+        for (long i = 0; i < numRecords; ++i) {
+           String resp = reader.readLine();
+           recordStats(resp, 1, stats);
         }
     }
 
@@ -89,5 +89,18 @@ public class Dashtable implements AutoCloseable {
         } catch (Exception e) {
             throw new UncheckedExecutionException(e);
         }
+    }
+
+    private void recordStats(String resp, int weight, PolicyStats stats) {
+        if (resp.equals("EVICTED")) {
+            stats.recordEviction();
+            stats.recordWeightedMiss(weight);
+        } else if (resp.equals("MISS")) {
+            stats.recordWeightedMiss(weight);
+        } else if (resp.equals("HIT")) {
+            stats.recordWeightedHit(weight);               
+        } else {
+            throw new IllegalStateException();  
+        }            
     }
 }

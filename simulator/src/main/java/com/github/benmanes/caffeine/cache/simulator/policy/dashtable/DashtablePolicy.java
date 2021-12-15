@@ -13,6 +13,8 @@ import static com.github.benmanes.caffeine.cache.simulator.policy.Policy.Charact
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.io.FileWriter;  
+import java.io.Writer;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 
@@ -21,17 +23,22 @@ import java.lang.System.Logger.Level;
 public class DashtablePolicy implements Policy {
     private final Dashtable dashtable;
     private final PolicyStats policyStats;
+    private final String logName = "/tmp/dash.log";
     Logger logger = System.getLogger(DashtablePolicy.class.getName());
     List<AccessEvent> buffer;
+    Writer fileWriter;
+    long numRecords = 0;
 
     public DashtablePolicy(Config config, Set<Characteristic> characteristics) {
         this.policyStats = new PolicyStats(name());
-        this.buffer = new ArrayList<AccessEvent>();
+        this.buffer = new ArrayList<AccessEvent>();        
         BasicSettings settings = new BasicSettings(config);
 
         try {
             this.dashtable = new Dashtable();
             this.dashtable.setMaxSize(settings.maximumSize());
+            this.fileWriter = new FileWriter(logName);
+            // this.fileWriter.write("MAX " + settings.maximumSize() + "\n");
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -44,7 +51,14 @@ public class DashtablePolicy implements Policy {
 
     @Override
     public void record(AccessEvent event) {
-        buffer.add(event);
+        // buffer.add(event);
+        ++numRecords;
+        try {
+            fileWriter.write("FINDINSERT " + event.key() + " " + event.weight() + "\n");
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
         if (buffer.size() >= 1000) {
             flush();
         }
@@ -73,6 +87,14 @@ public class DashtablePolicy implements Policy {
     public void finished() {
       logger.log(Level.INFO, "DashtablePolicy.Finished");
       flush();
+      try {
+          this.fileWriter.flush();
+          this.fileWriter.close();
+          dashtable.loadFile(logName, numRecords, policyStats);
+      }
+      catch (IOException e) {
+         throw new UncheckedIOException(e);
+      }
     }
 
 
